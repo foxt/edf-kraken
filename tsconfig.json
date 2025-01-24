@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        "jsx": "react",
+        "jsxFactory": "h",
+        "jsxFragmentFactory": "Fragment",
+        "lib": ["ESNext"],
+        "target": "ESNext",
+        "moduleResolution": "Bundler",
+        "resolveJsonModule": true,
+        "allowImportingTsExtensions": true,
+        "noEmit": true
+    }
+}
