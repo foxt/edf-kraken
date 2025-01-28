@@ -8,12 +8,16 @@ const LoginPage = () => {
     let kraken = useSignal("api.edfgb-kraken.energy");
     let email = useSignal("");
     let password = useSignal("");
+
+    const doLogin = () => 
+        login(`https://${kraken.value}/v1/graphql/`, { email: email.value, password: password.value });
+
     return authState.value == "loading" ? "Loading..." : <div>
         {authState.value instanceof Error ? <div>{authState.value.message}</div> : null}
         <input type="text" placeholder="Kraken" value={kraken.value} onInput={(e) => kraken.value = e.currentTarget.value} />
         <input type="email" placeholder="Email" value={email.value} onInput={(e) => email.value = e.currentTarget.value} />
         <input type="password" placeholder="Password" value={password.value} onInput={(e) => password.value = e.currentTarget.value} />
-        <button onClick={() => login(kraken.value, email.value, password.value)}>Login</button>
+        <button onClick={doLogin}>Login</button>
     </div>;
 }
 
@@ -32,13 +36,12 @@ const ViewAccount = ({ viewAccount, back }: { viewAccount: string, back: () => v
 
     useEffect(() => {
         let now = new Date();
-        let today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        let yesterday = new Date(today.getTime());
+        let yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         yesterday.setDate(yesterday.getDate() - 2);
         getMeasurements({
             accountNumber: viewAccount,
             startAt: yesterday,
-            endAt: today,
+            endAt: now,
             first: 1000,
             utilityFilters: [
                 { electricityFilters: {

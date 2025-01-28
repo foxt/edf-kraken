@@ -28,7 +28,13 @@ async function doGql<R>(url: string | undefined, _token: Promise<{ token: string
     return data.data as R;
 }
 
-export const obtainKrakenToken = (url: string, email: string, password: string) => 
+export type ObtainJSONWebTokenInput = 
+    { APIKey: string } |
+    { email: string, password: string } |
+    { refreshToken: string } |
+    { organizationSecretKey: string } |
+    { preSignedKey: string };
+export const obtainKrakenToken = (url: string, data: ObtainJSONWebTokenInput) => 
     doGql<{
         obtainKrakenToken: {
             token:            string;
@@ -39,9 +45,11 @@ export const obtainKrakenToken = (url: string, email: string, password: string) 
         };
     }>(
         url, undefined, 
-            {"operationName":"obtainKrakenToken","query":"mutation obtainKrakenToken($input: ObtainJSONWebTokenInput!) {\n  obtainKrakenToken(input: $input) {\n    token\n    payload\n    refreshToken\n    refreshExpiresIn\n    __typename\n  }\n}", "variables":{"input":{
-            email, password
-        }}}
+            {
+                "operationName":"obtainKrakenToken",
+                "query":"mutation obtainKrakenToken($input: ObtainJSONWebTokenInput!) {\n  obtainKrakenToken(input: $input) {\n    token\n    payload\n    refreshToken\n    refreshExpiresIn\n    __typename\n  }\n}", 
+                "variables":{ "input": data }
+            }
     )
 
 export interface AccountUserType {

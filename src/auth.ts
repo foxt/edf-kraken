@@ -1,5 +1,5 @@
 import { computed, signal } from "@preact/signals";
-import { obtainKrakenToken } from "./gql.ts";
+import { ObtainJSONWebTokenInput, obtainKrakenToken } from "./gql.ts";
 
 export type KrakenJwtPayload = {
     "sub": `kraken|${string}`,
@@ -45,7 +45,6 @@ function checkAuthorised() {
     }
 }
 
-let start = Date.now();
 export async function getAuthToken() {
     console.log("Get auth");
     try {
@@ -59,29 +58,46 @@ export async function getAuthToken() {
         checkAuthorised();
     } catch(e) {
         console.log(e);
-        authState.value = e as Error;
+        
+        let refreshData;
+        try {
+            let data  = JSON.parse(localStorage.getItem('refreshData'));
+            if (data.expires > Date.now() / 1000) 
+                refreshData = data;
+        } catch(e) { console.log("Can't refresh because", e)}
+        if (refreshData) {
+            let { token, url } = refreshData;
+            await login(url, { refreshToken: token });
+        } else { 
+            if (authState.value !== "loading")
+                authState.value = e;
+        }
+        return getAuthToken();
+        
+    
     }
     return { token: currentAccessToken.value, onSuccess: () => authState.value = 'ok' };
 }
 currentAccessToken.subscribe(getAuthToken);
 getAuthToken();
 
-export async function login(kraken: string, email: string, password: string) {
+export async function login(url: string, data: ObtainJSONWebTokenInput) {
     authState.value = "loading";
     try {
-        const url = `https://${kraken}/v1/graphql/`;
-        let {obtainKrakenToken: tkn} = await obtainKrakenToken(url, email, password);
+        let {obtainKrakenToken: tkn} = await obtainKrakenToken(url, data);
         
         localStorage.setItem('authToken', tkn.token);
-        localStorage.setItem('refreshToken', JSON.stringify({
+        localStorage.setItem('refreshData', JSON.stringify({
             token: tkn.refreshToken,
             expires: tkn.refreshExpiresIn,
             url
         }))
         currentAccessToken.value = tkn.token;
         authState.value = "ok";
+        return true;
     } catch(e) {
         authState.value = e as Error;
+        return false;
     } 
 }
 
